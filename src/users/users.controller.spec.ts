@@ -9,9 +9,11 @@ import { CreateUserDto } from './dtos/create-user.dto';
 describe('UsersController', () => {
   let controller: UsersController;
 
+  //Mocks - Partial implementation allows us to only implement the functions that we need for our tests
   let userServiceMock: Partial<UsersService>;
   let authServiceMock: Partial<AuthService>;
 
+  //Runs before each 'it' test
   beforeEach(async () => {
 
     userServiceMock = {
@@ -41,8 +43,11 @@ describe('UsersController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers:[
+        //Registering custom implementations
         {
+          //The type of the custom provider
           provide: UsersService,
+          //The implementation of the custom provider
           useValue: userServiceMock
         },
         {

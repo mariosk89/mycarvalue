@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -6,16 +6,53 @@ import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { User } from './users/user.entity';
 import { Report } from './reports/report.entity';
+import { ValidationPipe } from '@nestjs/common';
+import { APP_PIPE } from '@nestjs/core';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+
+const cookieSession = require('cookie-session');
 
 @Module({
-  imports: [UsersModule, ReportsModule, 
-    TypeOrmModule.forRoot({
-    type: 'sqlite',
-    database: 'db.sqlite',  //will create the sqlite file
-    entities: [User, Report],
-    synchronize: true       // only use in dev environment - auto run and apply migration based on changes in the entities
-  })],
+  imports: [
+    //Registering the ConfigModule that will read the variables from the .env file
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV}`
+    }),
+    UsersModule, ReportsModule, 
+    TypeOrmModule.forRootAsync({
+      //ConfigService exposes the variables read by the ConfigModule
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        return {
+          type: 'sqlite',
+          database: config.get<string>('DB_NAME'), // Getting the name of the database from the ConfigService
+          entities: [User, Report], // Registering the various entities
+          synchronize: true         // Only use in dev environment - auto run and apply migration based on changes in the entities
+        }
+      }
+    })
+    //Configuring TypeOrm without the ConfigService
+    // TypeOrmModule.forRoot({
+    // type: 'sqlite',
+    // database: 'db.sqlite',  
+    // entities: [User, Report], 
+    // synchronize: true       
+    // })
+],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    { //Setting up a global pipe
+      provide: APP_PIPE, 
+      useValue: new ValidationPipe({whitelist: true})
+    }
+  ],
 })
-export class AppModule {}
+export class AppModule {
+
+  //Globally configuring middleware
+  configure(consumer: MiddlewareConsumer){
+    consumer.apply(cookieSession({keys: ['asdfasdf']})) //'asdfasdf' will be used to encrypt the content of the cookies
+    .forRoutes('*'); // Apply on all routes (*) (Globally)
+  }
+}

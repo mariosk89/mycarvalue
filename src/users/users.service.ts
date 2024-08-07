@@ -6,8 +6,7 @@ import { User } from './user.entity';
 @Injectable()
 export class UsersService {
 
-    constructor(@InjectRepository(User) private repository: Repository<User>){
-    }
+    constructor(@InjectRepository(User) private repository: Repository<User>){}
 
     create(email: string, password: string){
         // 'create' creates the entity but does not persist it in the database
