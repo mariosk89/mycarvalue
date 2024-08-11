@@ -34,7 +34,7 @@ export class UsersService {
     async update(id: number, attrs: Partial<User>){
         const user = await this.repository.findOneBy({ id });
         if(!user){
-            throw new NotFoundException('User not found');
+            throw new NotFoundException('Update User - User not found');
         }
 
         Object.assign(user, attrs);
@@ -52,7 +52,7 @@ export class UsersService {
     async remove(id: number){
         const user = await this.repository.findOneBy({ id });
         if(!user){
-            throw new NotFoundException('User not found');
+            throw new NotFoundException('Remove user - User not found');
         }
 
         this.repository.remove(user);

@@ -45,7 +45,7 @@ export class AuthService{
         // [user] means we assume we get back ONE user (the function retuens a list
         const [user] = await this.userService.find(email);
         if(!user){
-            throw new NotFoundException('User not found');
+            throw new NotFoundException('Sign in - User not found');
         }
         // 2. Getting the hash and the salt
         const [salt, storedHash] = user.password.split('.');
