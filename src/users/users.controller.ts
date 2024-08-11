@@ -16,6 +16,7 @@ import { AuthGuard } from '../guards/auth.guard';
 
 @Controller('auth')
 @Serialize(UserDto) // Alternatively @UseInterceptors(new SerializeInterceptor(UserDto))
+// Serializes the outgoing respopnse using the details inside the provided DTO
 export class UsersController {
 
     constructor(
@@ -68,6 +69,7 @@ export class UsersController {
 
     @Get()
     findAllUsers(@Query('email') email: string){
+        console.log('finding all users');
         return this.userService.find(email);
     }
 

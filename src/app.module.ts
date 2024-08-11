@@ -41,7 +41,8 @@ const cookieSession = require('cookie-session');
     // })
 ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     { //Setting up a global pipe
       provide: APP_PIPE, 
       useValue: new ValidationPipe({whitelist: true})
