@@ -9,29 +9,39 @@ import { Report } from './reports/report.entity';
 import { ValidationPipe } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmConfig } from './config/typeorm.config';
 
 const cookieSession = require('cookie-session');
 
 @Module({
   imports: [
+    
     //Registering the ConfigModule that will read the variables from the .env file
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`
     }),
-    UsersModule, ReportsModule, 
+
+    UsersModule, 
+    ReportsModule, 
+
     TypeOrmModule.forRootAsync({
-      //ConfigService exposes the variables read by the ConfigModule
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        return {
-          type: 'sqlite',
-          database: config.get<string>('DB_NAME'), // Getting the name of the database from the ConfigService
-          entities: [User, Report], // Registering the various entities
-          synchronize: true         // Only use in dev environment - auto run and apply migration based on changes in the entities
-        }
-      }
-    })
+      useClass: TypeOrmConfig,
+    }),
+
+    // Configuration when not using ormconfig.js
+    // TypeOrmModule.forRootAsync({
+    //   //ConfigService exposes the variables read by the ConfigModule
+    //   inject: [ConfigService],
+    //   useFactory: (config: ConfigService) => {
+    //     return {
+    //       type: 'sqlite',
+    //       database: config.get<string>('DB_NAME'), // Getting the name of the database from the ConfigService
+    //       entities: [User, Report], // Registering the various entities
+    //       synchronize: true         // Only use in dev environment - auto run and apply migration based on changes in the entities
+    //     }
+    //   }
+    // })
     //Configuring TypeOrm without the ConfigService
     // TypeOrmModule.forRoot({
     // type: 'sqlite',
@@ -41,6 +51,7 @@ const cookieSession = require('cookie-session');
     // })
 ],
   controllers: [AppController],
+
   providers: [
     AppService,
     { //Setting up a global pipe
@@ -49,11 +60,24 @@ const cookieSession = require('cookie-session');
     }
   ],
 })
+
 export class AppModule {
+
+  constructor(private configService: ConfigService){
+
+  }
 
   //Globally configuring middleware
   configure(consumer: MiddlewareConsumer){
-    consumer.apply(cookieSession({keys: ['asdfasdf']})) //'asdfasdf' will be used to encrypt the content of the cookies
+    consumer
+    .apply(
+      cookieSession(
+        {
+          keys: [this.configService.get('COOKIE_KEY')]
+          //keys: ['asdfasdf'] //hardcoded 'asdfasdf' will be used to encrypt the content of the cookies. need to get from the configuration instead
+        }
+      ) 
+    ) 
     .forRoutes('*'); // Apply on all routes (*) (Globally)
   }
 }
